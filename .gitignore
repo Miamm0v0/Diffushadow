@@ -1,0 +1,37 @@
+# Python cache and local environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.env
+
+# IDE / OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Generated datasets, checkpoints, results, and figures
+data/
+checkpoints/
+results/
+figures/
+comparison_results/
+eval_exact_cache/
+model_train/
+
+# Large experiment artifacts
+*.pt
+*.pth
+*.npz
+*.pkl
+*.pickle
+*.npy
+
+# Logs and temporary outputs
+*.log
+nohup.out
+tmp/
+temp/
