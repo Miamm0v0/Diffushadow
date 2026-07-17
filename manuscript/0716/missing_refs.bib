@@ -1,0 +1,132 @@
+% ============================================================================
+% Diffushadow — supplementary references surfaced by RAClaw_KG literature graphs
+% (ANNNI: 109 papers / J1-J2: 176 papers).  Merge these into sn-bibliography.bib.
+% Each entry is annotated with WHERE in the manuscript it should be cited and WHY.
+% DOIs/arXiv ids are taken verbatim from OpenAlex records in the graph.
+% ----------------------------------------------------------------------------
+
+% === J1-J2 : model-specific generative / transformer prior art =============
+% Cite in Introduction (autoregressive-vs-diffusion paragraph) AND in
+% "Generalization to frustrated and competing-interaction spin chains".
+% These are direct competitors on the SAME 1D J1-J2 Hamiltonian; not citing
+% them is the biggest novelty-positioning gap for a specialist referee.
+
+@article{viteritti2023transformer,
+  title   = {Transformer Variational Wave Functions for Frustrated Quantum Spin Systems},
+  author  = {Viteritti, Luciano Loris and Rende, Riccardo and Becca, Federico},
+  journal = {Physical Review Letters},
+  volume  = {130},
+  number  = {23},
+  pages   = {236401},
+  year    = {2023},
+  doi     = {10.1103/PhysRevLett.130.236401}
+}
+
+@article{viteritti2022accuracy,
+  title   = {Accuracy of restricted {B}oltzmann machines for the one-dimensional
+             $J_1$-$J_2$ {H}eisenberg model},
+  author  = {Viteritti, Luciano Loris and Ferrari, Francesco and Becca, Federico},
+  journal = {SciPost Physics},
+  volume  = {12},
+  number  = {5},
+  pages   = {166},
+  year    = {2022},
+  doi     = {10.21468/SciPostPhys.12.5.166}
+}
+
+@article{rahaman2023machine,
+  title   = {Machine learning approach to study quantum phase transitions of a
+             frustrated one dimensional spin-1/2 system},
+  author  = {Rahaman, Sk Saniur and Haldar, Sumit and Kumar, Manoranjan},
+  journal = {Journal of Physics: Condensed Matter},
+  year    = {2023},
+  doi     = {10.1088/1361-648X/acb030}
+}
+
+@article{rende2025foundation,
+  title   = {Foundation neural-network quantum states as a unified {A}nsatz for
+             multiple {H}amiltonians},
+  author  = {Rende, Riccardo and Viteritti, Luciano Loris and Becca, Federico and
+             Scardicchio, Antonello and Laio, Alessandro and Carleo, Giuseppe},
+  journal = {Nature Communications},
+  year    = {2025},
+  doi     = {10.1038/s41467-025-62098-x}
+}
+
+% === J1-J2 : physics benchmark the manuscript should engage ================
+% Cite in Methods (J1-J2 Hamiltonian) and near the thermodynamic-limit
+% discussion. Locates the gapless->dimerized transition at J2c ~ 0.2411 J1
+% and underpins a Majumdar-Ghosh (J2/J1=0.5) exact-state benchmark.
+
+@article{okamoto1992fluid,
+  title   = {Fluid-dimer critical point in $S=1/2$ antiferromagnetic
+             {H}eisenberg chain with next nearest neighbor interactions},
+  author  = {Okamoto, Kiyomi and Nomura, Kiyohide},
+  journal = {Physics Letters A},
+  volume  = {169},
+  number  = {6},
+  pages   = {433--437},
+  year    = {1992},
+  doi     = {10.1016/0375-9601(92)90823-5}
+}
+
+% === ANNNI : classical-shadow + ML (the manuscript's own ingredients) ======
+% Cite in Introduction and in the ANNNI results/discussion. These combine
+% classical shadows + ML for phase identification on ANNNI-type systems and
+% are 2024-2026 -- exactly the "recent probe" the reviewers will expect.
+
+@article{morais2026distinguishing,
+  title   = {Distinguishing ordered phases using machine learning and classical shadows},
+  author  = {Morais, Leandro Pereira and Pernambuco, Tiago and Pereira, Rodrigo G. and
+             Canabarro, Askery and Soares-Pinto, Diogo O. and others},
+  journal = {International Journal of Modern Physics C},
+  year    = {2026},
+  doi     = {10.1142/S0129183126430060},
+  note    = {arXiv:2501.17837}
+}
+
+@article{ho2026unsupervised,
+  title   = {Unsupervised framework for identifying diverse quantum phase
+             transitions using classical shadow tomography},
+  author  = {Ho, Chi-Ting and Wang, Daw-Wei},
+  journal = {Physical Review B},
+  year    = {2026},
+  doi     = {10.1103/4npj-83gs},
+  note    = {arXiv:2508.17688}
+}
+
+@article{ito2026learning,
+  title   = {Learning from imperfect quantum data via unsupervised domain
+             adaptation with classical shadows},
+  author  = {Ito, Kosuke and Tanji, Akira and Yano, Hiroshi and Suzuki, Yudai and
+             Yamamoto, Naoki},
+  journal = {arXiv preprint},
+  year    = {2026},
+  note    = {arXiv:2603.28294}
+}
+
+% === ANNNI : finite-size / finite-entanglement scaling benchmark ===========
+% Cite where finite-size scaling toward the thermodynamic limit is claimed for
+% ANNNI. Canonical scaling reference for the 1D transverse ANNNI chain;
+% directly relevant to the extrapolation-rigor concern.
+
+@article{nagy2011exploring,
+  title   = {Exploring phase transitions by finite-entanglement scaling of
+             {MPS} in the {1D} {ANNNI} model},
+  author  = {Nagy, Adam},
+  journal = {New Journal of Physics},
+  year    = {2011},
+  note    = {arXiv:1102.4290}
+}
+
+@article{beccaria2007floating,
+  title   = {Evidence for a floating phase of the transverse {ANNNI} model at
+             high frustration},
+  author  = {Beccaria, Matteo and Campostrini, Massimo and Feo, Alessandra},
+  journal = {Physical Review B},
+  volume  = {76},
+  number  = {9},
+  pages   = {094410},
+  year    = {2007},
+  doi     = {10.1103/PhysRevB.76.094410}
+}
