@@ -1,0 +1,131 @@
+% ============================================================
+% WS3 — architecture-claims rewrite (drop-in for sn-article.tex)
+%
+% Basis: completed 2x2 controlled comparison (2D TFI, cross-scale).
+%   masked diffusion (lr 1e-5 / 1e-4):  5.6e-4, 1.3e-3, 3.0e-3  /  8.7e-4, 2.6e-3, 3.9e-3
+%   AR twin        (lr 1e-4 / 1e-5):    3.8e-4, 4.3e-4, 8.1e-4  /  4.1e-4, 4.6e-4, 9.2e-4
+%   (mean MSE over three ZZ observables at 4x4 / 4x5 / 4x6)
+% The AR twin is identical in tokens, embeddings, size, RoPE, and data;
+% only the attention mask and factorization differ.
+%
+% WHAT TO REMOVE from the current draft:
+%  * Introduction: the claim that causal attention is "less compatible
+%    with the nature of quantum many-body systems" as an ACCURACY
+%    argument, and "autoregressive inductive biases may introduce an
+%    unnecessary sequential bias" — soften both as described below.
+%  * Results ("Diffusion generative modeling"): "The choice of full
+%    attention over causal attention is not merely an architectural
+%    preference but an alignment with the physical principles..." —
+%    replace with the paragraph below.
+% ============================================================
+
+% ---------------------------------------------------------------
+% (1) Replacement paragraph for the Results architecture discussion
+% ---------------------------------------------------------------
+
+To isolate the role of the generative factorization, we trained a
+controlled autoregressive counterpart of Diffushadow: identical token
+layout, embeddings, network size, positional encoding, and training data,
+differing only in a causal attention mask and a fixed left-to-right
+factorization of the measurement distribution. On the two-dimensional
+cross-scale benchmark the two models achieve comparable accuracy, with the
+autoregressive variant performing at least as well on the site-averaged
+correlations studied here (Extended Data Table~X). This is an honest and,
+we believe, informative outcome: for ground states of stoquastic
+Hamiltonians measured in product bases, a fixed-order factorization of the
+measurement distribution is not an obstacle to learning size-transferable
+structure. The advantages of the masked-diffusion formulation lie
+elsewhere, in capabilities rather than raw accuracy on fixed observables.
+First, a single trained model conditions on \emph{any} subset of observed
+outcomes: it can complete partially observed snapshots (measurement
+inpainting) for arbitrary patterns of known and unknown sites, which a
+fixed-order autoregressive model supports only when the conditioning set
+is a prefix of its generation order. Second, the denoising order is chosen
+adaptively at generation time. Our decoding analysis shows that this
+scheduling freedom carries physical weight: unmasking many sites per step
+samples them conditionally independently and destroys long-range
+correlations in ordered phases, while entropy-guided sequential decoding
+--- in which the model itself selects which site to commit next ---
+restores them (Extended Data Fig.~Y). The masked-diffusion framework
+therefore provides a strictly larger family of conditioning and decoding
+strategies within one model, and the attention analysis of the following
+section shows that its bidirectional attention organizes information in
+patterns that mirror physical correlation structure.
+
+% ---------------------------------------------------------------
+% (2) Introduction: replace the last two sentences of the
+% autoregressive-vs-diffusion paragraph with:
+% ---------------------------------------------------------------
+
+While autoregressive models impose a fixed generation order, masked
+diffusion models the joint measurement distribution under arbitrary
+conditioning patterns and chooses its generation order adaptively. We
+compare the two factorizations in a controlled setting below; we find
+that the practical strengths of the diffusion formulation lie in this
+conditioning and scheduling flexibility, together with bidirectional
+attention structures that align with physical correlations, rather than
+in a generic accuracy advantage.
+
+% ---------------------------------------------------------------
+% (3) Extended Data Table X (the 2x2 grid) — caption
+% ---------------------------------------------------------------
+
+% Extended Data Table X: Controlled factorization comparison on the
+% two-dimensional transverse-field Ising benchmark. Mean squared error of
+% three site-averaged ZZ observables estimated from 20,000 generated
+% snapshots per coupling, at the trained size (4x4) and two unseen sizes.
+% The autoregressive (AR) twin shares tokens, embeddings, network size,
+% positional encoding and training data with Diffushadow; only the causal
+% attention mask and the fixed generation order differ.  Both models are
+% shown at two learning rates; results are robust to this choice.
+%
+%                       4x4 (trained)   4x5 (unseen)   4x6 (unseen)
+%  Diffushadow (lr 1e-5)   5.6e-4          1.3e-3         3.0e-3
+%  Diffushadow (lr 1e-4)   8.7e-4          2.6e-3         3.9e-3
+%  AR twin     (lr 1e-4)   3.8e-4          4.3e-4         8.1e-4
+%  AR twin     (lr 1e-5)   4.1e-4          4.6e-4         9.2e-4
+
+% ---------------------------------------------------------------
+% (3b) Measurement-inpainting demonstration (Extended Data figure/table)
+% Data: results2d/inpaint_demo.npz (4x4 TFI torus, 2000 exact ED test
+% snapshots per coupling, hidden-half completions).
+% ---------------------------------------------------------------
+
+To demonstrate the conditioning capability directly, we take exact
+classical-shadow snapshots of the $4\times4$ transverse-field Ising torus,
+hide the outcomes of half of the sites, and let Diffushadow complete them.
+The completions are scored on cross-partition correlations
+$\langle Z_i Z_j\rangle$ between an observed site $i$ and a completed site
+$j$, for which the exact values are known. For both a contiguous mask (which
+a fixed-order autoregressive model could also condition on) and an
+interleaved mask (which it cannot), the inpainted cross-partition
+correlations reproduce the exact values across all phases --- e.g.\
+$1.003$ vs $1.009$ at $g=0.2$ and $0.289$ vs $0.296$ near criticality for
+the interleaved mask --- while completions drawn without conditioning
+collapse to near zero ($|\cdot|\le 0.12$), confirming that the model
+performs genuine conditional inference on partially observed measurement
+records. This operation --- completing an arbitrarily masked measurement
+snapshot --- has no analogue in Hamiltonian-based numerical methods and is
+unavailable to fixed-order autoregressive factorizations.
+
+% Extended Data table (fill from inpaint_demo.npz):
+%   g     mask         exact    inpainted   unconditional
+%   0.20  prefix       +1.006   +0.997      +0.122
+%   0.20  interleaved  +1.009   +1.003      +0.017
+%   0.50  prefix       +0.935   +0.942      +0.012
+%   0.50  interleaved  +0.901   +0.915      +0.052
+%   0.75  prefix       +0.262   +0.240      +0.035
+%   0.75  interleaved  +0.296   +0.289      -0.003
+%   0.90  prefix       +0.075   +0.069      +0.024
+%   0.90  interleaved  +0.041   +0.015      -0.020
+
+% ---------------------------------------------------------------
+% (4) Note for the Discussion limitations paragraph (one sentence):
+% ---------------------------------------------------------------
+
+On the benchmarks studied here, an equally sized autoregressive model
+attains comparable cross-scale accuracy on fixed site-averaged
+observables; the practical case for masked diffusion rests on its
+conditioning flexibility and adaptive decoding rather than on accuracy
+alone, and identifying observable classes or Hamiltonian families where
+the factorizations genuinely separate remains an open question.

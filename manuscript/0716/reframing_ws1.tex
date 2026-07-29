@@ -1,0 +1,122 @@
+% ============================================================
+% WS1 reframing text — drop-in replacements for sn-article.tex
+% Numbers marked [DMRG: ...] are placeholders to be filled from
+% dmrg_refs/*.npz once the validation runs complete.
+% ============================================================
+
+% ---------------------------------------------------------------
+% (1) REPLACE the second half of Introduction paragraph 1
+% (currently: "...while classical numerical simulations rapidly
+% become computationally intractable as system size increases.")
+% A referee will object that in 1D this is false (DMRG). New text
+% concedes this up front and states the actual gap.
+% ---------------------------------------------------------------
+
+Although recent advances in programmable quantum simulators and quantum
+computers have enabled the preparation of increasingly complex quantum
+states \cite{bourgund2025formation, king2025beyond}, obtaining and
+analyzing large-scale quantum measurements remains prohibitively expensive
+in physical experiments. On the classical side, the applicability of
+numerical methods is regime-dependent: in one dimension, tensor-network
+methods such as the density-matrix renormalization group (DMRG) provide
+quasi-exact ground-state properties at modest cost, whereas in higher
+dimensions, for long-range or frustrated interactions, and for states with
+extensive entanglement, their cost grows rapidly. Most importantly, all
+such methods require exact knowledge of the Hamiltonian, whereas
+present-day quantum hardware produces measurement records from devices
+whose effective Hamiltonians are known only approximately. Developing
+scalable approaches that infer large-scale quantum behavior directly from
+limited, experimentally accessible measurement data therefore remains a
+fundamental open challenge.
+
+% ---------------------------------------------------------------
+% (2) ADD to the final Introduction paragraph (after "...including
+% the transverse-field Ising model, the frustrated J1-J2 model, and
+% the axial next-nearest-neighbor Ising (ANNNI) model."):
+% ---------------------------------------------------------------
+
+We deliberately benchmark in one dimension, where quasi-exact
+tensor-network references remain available at every system size we
+generate: this allows the cross-scale generation and extrapolation
+pipeline to be validated rigorously, rather than only checked for internal
+consistency. The one-dimensional study is thus a controlled proof of
+principle for a method whose intended regime is precisely where such
+classical references cease to exist---higher-dimensional and frustrated
+systems, and measurement data from quantum hardware.
+
+% ---------------------------------------------------------------
+% (3) NEW Results paragraph — insert at the end of
+% "Thermodynamic-limit inference from recursively generated
+% measurements" (fill numbers from dmrg_refs).
+% ---------------------------------------------------------------
+
+Because exact diagonalization is limited to $N\lesssim 24$, we validate
+the recursively generated measurements at larger sizes against DMRG
+calculations performed at the same system sizes and couplings
+($N=32$--$96$, periodic boundary conditions, bond dimension $\chi=256$,
+energy convergence $10^{-9}$; the DMRG implementation reproduces exact
+diagonalization at $N=12$ to machine precision). Away from the critical
+region, observables estimated from the recursively generated measurements
+agree with DMRG to a mean absolute deviation of $0.017$ (all distances;
+$0.025$ for $r=1$) across all sizes up to $N=96$ --- four times the largest
+exactly diagonalizable system. Deviations concentrate near the critical
+point, where correlation lengths are largest: for $g\in[0.4,0.6]$ the mean
+$r{=}1$ deviation grows to $0.086$ (maximum $0.167$ at $N=96$, $g=0.5$),
+increasing systematically with recursion depth, and the generated
+correlations decay too rapidly with distance on the paramagnetic side.
+The recursive procedure is therefore quantitatively reliable in both
+phases but accumulates bias in the critical region, and we restrict
+thermodynamic-limit claims accordingly. The $1/N$-extrapolated thermodynamic-limit values agree with independent
+infinite-system (iDMRG) estimates to better than $0.01$ deep in the
+ferromagnetic phase ($g\le0.2$) and at $g=0.8$; in the critical region the
+extrapolations inherit the recursion bias and undershoot the
+infinite-system values by up to $0.13$, and deep in the paramagnet a small
+residual offset ($\approx0.05$) survives extrapolation. This analysis
+converts the consistency-across-rounds
+check of the recursive procedure (Supplementary Fig.~4) into a validation
+against quasi-exact references at every size reached by the recursion ---
+including a transparent map of where the procedure degrades.
+
+% ---------------------------------------------------------------
+% (4) REPLACE the Discussion sentence "...Diffushadow provides a
+% data-driven pathway that complements existing analytical and
+% numerical approaches..." with an explicit relation-to-tensor-
+% networks paragraph:
+% ---------------------------------------------------------------
+
+It is useful to state precisely how this framework relates to established
+tensor-network methods. For the one-dimensional ground states studied
+here, DMRG is superior in both accuracy and cost, and we use it as the
+validation standard at system sizes beyond exact diagonalization. The
+advantages of learned measurement generation lie on orthogonal axes.
+First, its input is measurement data rather than a Hamiltonian: it applies
+directly to records produced by quantum hardware, for which the effective
+Hamiltonian---and hence any variational simulation---is only approximately
+known. Second, a single trained model is amortized across the full
+parameter range and across system sizes, whereas each tensor-network
+calculation addresses one parameter point at one size. Third, its
+per-sample generation cost is insensitive to the entanglement structure of
+the underlying state, while tensor-network costs grow exponentially with
+lattice width in two dimensions; our two-dimensional results demonstrate
+the mechanism precisely in this direction. Finally, generated measurements
+are unlimited in number at fixed cost, making sample-hungry estimators
+practical, although generative amplification reduces statistical variance
+only and cannot remove model bias. We therefore regard learned measurement
+generation not as a competitor to tensor networks in their domain of
+strength, but as a complementary inference route whose natural targets are
+experimental measurement data and regimes beyond one dimension.
+
+% ---------------------------------------------------------------
+% (5) ADD near the end of the Discussion (Rydberg bridge + outlook):
+% ---------------------------------------------------------------
+
+The ANNNI benchmark also places Diffushadow in the universality class of
+commensurate--incommensurate transitions realized by Rydberg-atom arrays
+\cite{ebadi2021quantum, chepiga2019floating}, whose native output---fixed-basis
+occupation snapshots across a scanned detuning---is exactly the data format
+consumed by our framework. Applying measurement-based generative inference
+to such experimental records, for instance to locate incommensurate and
+floating-phase boundaries at system sizes beyond those directly
+characterized, is a natural next step. % (bib entries to add: ebadi2021quantum
+% = Ebadi et al., Nature 595, 227 (2021); chepiga2019floating = Chepiga &
+% Mila, Phys. Rev. Lett. 122, 017205 (2019).)

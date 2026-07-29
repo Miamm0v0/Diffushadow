@@ -1,0 +1,129 @@
+% ============================================================
+% 2D TFI cross-scale section — drop-in text for sn-article.tex
+%
+% Suggested placement:
+%   * Results subsection: after "Generalization to frustrated and
+%     competing-interaction spin chains", before "Learning physically
+%     aligned quantum structures".
+%   * Methods paragraph: append to "Quantum spin-chain Hamiltonians"
+%     (or its own Methods subsection).
+%   * Figure: figures2d/fig_tfi2d_crossscale.pdf
+% ============================================================
+
+\subsection{Extension to two-dimensional lattices}
+
+All results presented so far concern one-dimensional chains, a setting in
+which quasi-exact classical methods such as the density-matrix
+renormalization group remain available for cross-checking. As a first step
+beyond this regime, we test whether the measurement structures learned by
+Diffushadow transfer to two-dimensional systems, where tensor-network
+methods face rapidly growing entanglement costs. We consider the
+transverse-field Ising model on an $L_x \times L_y$ square lattice with
+periodic boundary conditions in both directions, at fixed width $L_x=4$ and
+increasing length $L_y$. Sites are ordered row by row, so that a vertical
+bond always connects tokens at a fixed relative offset in the measurement
+sequence, independent of $L_y$; the relative positional encoding can
+therefore reuse, at larger $L_y$, exactly the geometric relations observed
+during training. Importantly, no architectural modification of any kind is
+required: the two-dimensional geometry enters only through the training
+data.
+
+Diffushadow is trained on classical-shadow measurements of the $4\times3$
+(12-qubit) and $4\times4$ (16-qubit) tori and evaluated on the $4\times5$
+(20-qubit) and $4\times6$ (24-qubit) tori, which are never seen during
+training. Figure~\ref{fig:tfi2d} compares site-averaged spin correlations
+estimated from Diffushadow-generated measurements with exact
+diagonalization, for horizontal nearest-neighbor, vertical
+nearest-neighbor, and horizontal next-nearest-neighbor displacements. At
+the trained size the generated estimates track the exact results across
+both phases (mean squared error $5.6\times10^{-4}$ averaged over the three
+observables), and the accuracy degrades only gradually at the unseen sizes
+($1.3\times10^{-3}$ at 20 qubits and $3.0\times10^{-3}$ at 24 qubits).
+In particular, the vertical correlations---which probe bonds separated by
+eight token positions in the measurement sequence---are reproduced with
+accuracy comparable to the horizontal ones at all sizes, indicating that
+the model has learned the two-dimensional lattice geometry rather than a
+one-dimensional proximity rule. The residual cross-scale error concentrates
+near the critical region ($g_c^{2\mathrm{D}}\approx0.753$ for this
+parametrization in the two-dimensional limit), where correlation lengths
+are largest and finite-size statistics are most size-sensitive, and the
+distinction between the $r{=}1$ and $r{=}2$ horizontal correlations is
+partially washed out deep in the paramagnetic regime at the largest unseen
+size. These results constitute a proof of principle that the cross-scale
+generation mechanism underlying Diffushadow is not restricted to
+one-dimensional physics, and they mark the regime---two-dimensional
+lattices of growing extent---in which learned measurement generation may
+eventually complement tensor-network approaches whose cost grows
+exponentially with lattice width.
+
+% ---------------- closing paragraph: tube thermodynamic limit ----------
+% (add after the paragraph above; figure = fig14_tube_thermolimit)
+
+Finally, we execute the complete inference pipeline in this
+two-dimensional setting. Applying the recursive scale-extrapolation
+procedure, the model is retrained on its own generated measurements and
+extended to $4\times8$, $4\times10$, and $4\times12$ tori (32--48 qubits),
+with every recursion step validated against DMRG at the same size; the
+deviations remain below $0.05$ outside the crossover region and saturate,
+rather than compound, with recursion depth. Extrapolating the generated
+correlations to $1/N \to 0$ yields thermodynamic-limit estimates for the
+infinite $4\times\infty$ tube, which we compare against numerically exact
+infinite-system iDMRG values. Outside the crossover window the
+extrapolations agree with the exact answers to within $0.008$--$0.06$
+(within one to a few standard errors of the finite-size fits), while
+inside the crossover the deviations grow to $0.27$, delimiting the
+validity window of the procedure. To our knowledge this constitutes the
+first end-to-end verification of generative thermodynamic-limit inference
+against exact infinite-system results in a two-dimensional geometry ---
+including a transparent map of where the inference degrades. The analysis
+also shows that finite-size extrapolations of generated observables must
+be reported with fit uncertainties: when correlations have already
+converged in system size, an unweighted linear fit in $1/N$ amplifies
+small per-size fluctuations into spurious intercept shifts.
+
+% ---------------- figure ----------------
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.98\textwidth]{fig/fig_tfi2d_crossscale.pdf}
+\caption{Cross-scale measurement generation for the two-dimensional
+transverse-field Ising model on $4\times L_y$ tori.
+Site-averaged spin correlations $\langle Z_i Z_{i+\hat{x}}\rangle$,
+$\langle Z_i Z_{i+\hat{y}}\rangle$, and
+$\langle Z_i Z_{i+2\hat{x}}\rangle$ estimated from Diffushadow-generated
+classical-shadow measurements (markers) are compared with exact
+diagonalization (solid lines) as functions of the transverse-field
+parameter $g$.
+Left: $4\times4$ (16 qubits, included in training).
+Middle: $4\times5$ (20 qubits, unseen).
+Right: $4\times6$ (24 qubits, unseen).
+The model is trained only on $4\times3$ and $4\times4$ measurement data.
+Dotted vertical lines mark the two-dimensional critical point
+$g_c^{2\mathrm{D}}\approx0.753$.}
+\label{fig:tfi2d}
+\end{figure}
+
+% ---------------- Methods paragraph ----------------
+% Append to Methods:
+
+\subsection{Two-dimensional transverse-field Ising benchmark}
+The two-dimensional benchmark uses the transverse-field Ising Hamiltonian
+$H_{\mathrm{2D}}(g)=-(1-g)\sum_{\langle ij\rangle}\sigma^z_i\sigma^z_j
+-g\sum_i \sigma^x_i$ on $L_x\times L_y$ square lattices with periodic
+boundary conditions in both directions, where $\langle ij\rangle$ runs over
+nearest-neighbor bonds. Sites are mapped to the one-dimensional token
+sequence in row-major order, $s=rL_x+c$ for row $r$ and column $c$, so that
+horizontal bonds correspond predominantly to adjacent site indices and
+vertical bonds to a constant index offset $L_x$. Training data consist of
+classical-shadow snapshots of the exact ground states of the $4\times3$ and
+$4\times4$ tori, obtained by matrix-free Lanczos diagonalization, at 13
+values of $g$ uniformly spaced in $[0.05,0.95]$ with $3000$ snapshots per
+value and system size. The network architecture, tokenization, training
+objective, and hyperparameters are identical to the one-dimensional
+experiments (4 layers, 8 heads, hidden dimension 128, rotary positional
+embeddings with $\theta=10^4$, 100 epochs). For evaluation, $2\times10^4$
+snapshots are generated per parameter value with entropy-guided sequential
+decoding (one site unmasked per denoising step); site-averaged $ZZ$
+correlations are estimated with the same inverse-channel factors and
+median-of-means aggregation ($K=10$) as in the one-dimensional analysis,
+and compared with exact diagonalization at 10 values of $g$, including the
+near-critical point $g=0.75$.
