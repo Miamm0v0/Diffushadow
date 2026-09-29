@@ -23,6 +23,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -46,7 +47,14 @@ def structure_factor(occ, qs):
                              * conn).sum() / n for q in qs])
 
 
-def complete(model, device, delta, b_tok, hidden, batch):
+def mask_seed(delta, frac, base):
+    """Deterministic per-(delta, loss fraction) seed, so the hidden sites are
+    identical across runs regardless of which fractions were requested."""
+    key = f"{delta:.6f}|{frac:.6f}|{base}".encode()
+    return int(hashlib.sha256(key).hexdigest()[:8], 16)
+
+
+def complete(model, device, delta, b_tok, hidden, batch, use_sampling=True):
     """Model-complete masked occupation tokens.  b_tok [M,N] int tokens,
     hidden [M,N] bool (True = lost atom).  Returns completed tokens."""
     M, n = b_tok.shape
@@ -63,7 +71,7 @@ def complete(model, device, delta, b_tok, hidden, batch):
         bb[torch.from_numpy(hidden[s0:s1])] = MASK_TOKEN_ID
         prompt[:, 2::2, 0] = bb
         done = generate_oseq_batch(model=model, prompt=prompt.to(device),
-                                   steps=k, temperature=1.0, use_sampling=True)
+                                   steps=k, temperature=1.0, use_sampling=use_sampling)
         out[s0:s1] = (done[:, torch.arange(2, L, 2), 0] > 0.5).cpu().numpy()
     return out
 
@@ -77,6 +85,13 @@ def main():
     ap.add_argument('--deltas', type=float, nargs='+', default=None,
                     help='restrict to these delta values (default: all in json)')
     ap.add_argument('--max_per_delta', type=int, default=3000)
+    ap.add_argument('--decode', choices=['sample', 'argmax'], default='sample',
+                    help="sample = draw from the posterior (right for statistics); "
+                         "argmax = most likely value (right for reconstruction accuracy)")
+    ap.add_argument('--save_gallery', type=int, default=0,
+                    help='save this many example (exact, mask, completed) shots')
+    ap.add_argument('--mask_seed', type=int, default=11,
+                    help='base seed for the per-(delta, fraction) hidden masks')
     ap.add_argument('--batch', type=int, default=512)
     ap.add_argument('--hidden_dim', type=int, default=128)
     ap.add_argument('--layer_num', type=int, default=4)
@@ -107,7 +122,6 @@ def main():
     model.load_state_dict(load_state_dict(args.model_path))
     model.eval()
 
-    rng = np.random.default_rng(11)
     out = {'qs': qs, 'deltas': np.array(sorted(by_delta)),
            'loss_fracs': np.array(args.loss_fracs)}
     for delta in sorted(by_delta):
@@ -122,15 +136,17 @@ def main():
         # unconditional ensemble (shared across loss fractions)
         b_un = complete(model, device, delta,
                         np.zeros_like(b_tok),
-                        np.ones((M, n), dtype=bool), args.batch)
+                        np.ones((M, n), dtype=bool), args.batch, use_sampling=True)
         occ_un = 1.0 - b_un
 
         for f in args.loss_fracs:
             k = max(1, round(f * n))
+            mrng = np.random.default_rng(mask_seed(delta, f, args.mask_seed))
             hidden = np.zeros((M, n), dtype=bool)
             for t in range(M):
-                hidden[t, rng.choice(n, size=k, replace=False)] = True
-            b_inp = complete(model, device, delta, b_tok, hidden, args.batch)
+                hidden[t, mrng.choice(n, size=k, replace=False)] = True
+            b_inp = complete(model, device, delta, b_tok, hidden, args.batch,
+                             use_sampling=(args.decode == 'sample'))
             occ_inp = 1.0 - b_inp
             # splice-uncond baseline: hidden sites taken from occ_un
             occ_spl = np.where(hidden, occ_un, occ_exact)
@@ -146,6 +162,13 @@ def main():
                     num += np.mean(a * c) - a.mean() * c.mean()
                     den += 1
                 return num / max(den, 1)
+
+            if args.save_gallery:
+                g = args.save_gallery
+                out[f'd{delta}_f{f}_gal_exact'] = occ_exact[:g]
+                out[f'd{delta}_f{f}_gal_hidden'] = hidden[:g]
+                out[f'd{delta}_f{f}_gal_inp'] = occ_inp[:g]
+                out[f'd{delta}_f{f}_gal_spl'] = occ_spl[:g]
 
             res = dict(
                 density=occ_inp.mean(axis=0),

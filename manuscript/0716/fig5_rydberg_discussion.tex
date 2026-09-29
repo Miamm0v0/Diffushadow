@@ -1,0 +1,133 @@
+% ============================================================
+% Drop-in text for the Rydberg / partial-measurement figure (Fig. 5)
+% and for the "how the model is used" part of the Discussion.
+%
+% Numbers here are reproduced by
+%   campaign/code/plot_fig5_rydberg_v2.py   (figure)
+%   campaign/code/ryd_bayes_bound.py        (exact limit)
+%   campaign/code/ryd_commensurate_check.py (N = 33 control)
+% and are documented in campaign/figures/fig5_rydberg/README.md.
+% ============================================================
+
+% ---------------- Results subsection ----------------
+
+\subsection{Completing partially observed atom-array measurements}
+
+Every experiment on a programmable atom array returns incomplete data: atoms
+are lost from the trap, and detection assigns no outcome at the affected
+sites. The standard response is to discard incomplete shots, which becomes
+prohibitive for observables that involve many sites at once. Because
+Diffushadow models the joint distribution of a measurement record rather than
+any single observable, it can instead \emph{complete} a shot: the surviving
+atoms are held fixed and the missing sites are filled in by conditional
+denoising, with no retraining and no change of architecture.
+
+We test this on a chain of $N=32$ atoms at $R_b/a = 2.35$, using held-out
+ground-state snapshots that the model has never seen. A random $30\%$ of the
+atoms are discarded in every shot, a loss rate far above that of current
+hardware, and the model completes them conditioned on the atoms that survived
+in that same shot. Figure~\ref{fig:rydberg}a shows twelve such shots before
+and after completion. Two decodings are reported throughout, because they
+answer different questions: sampling from the learned conditional
+distribution, which is the correct choice when the goal is an ensemble
+average, and most-likely decoding, which is the correct choice when the goal
+is to reconstruct one particular shot.
+
+The completed ensembles reproduce the physics of the underlying state. The
+density-density structure factor retains its $Z_3$ peak at $q = 2\pi/3$ with
+amplitude $0.536$, against $0.539$ for the intact data
+(Fig.~\ref{fig:rydberg}b), and the spread of the excited-atom number per shot
+is $0.538$ against $0.521$. Completions also respect the Rydberg blockade,
+which the model was never told about: among roughly $5.5\times10^4$
+nearest-neighbour pairs straddling the boundary between surviving and
+completed sites, fewer than $0.02\%$ are doubly excited. A control that
+generates from the detuning alone and splices the result into the lost sites
+--- carrying the correct density, but blind to the surviving atoms of that
+shot --- reproduces none of this: its structure-factor peak is $0.309$, its
+number spread $1.168$, and it violates the blockade in up to $3.7\%$ of seam
+pairs. What the model adds is therefore conditioning on the specific shot,
+not merely knowledge of the phase.
+
+The practical gain is statistical. An observable involving $k$ sites can be
+evaluated only on shots in which all $k$ survive, a fraction $(1-f)^k$ of the
+data at loss rate $f$. Completion returns every shot. For a $k$-site
+occupation correlator spaced by the $Z_3$ period, completion recovers the
+intact-data value to within $0.002$ while raising the usable sample from
+$467$ to $1000$ shots at $k=2$, and from $28$ to $1000$ at $k=8$ --- a
+$6.1\times$ improvement in precision at fixed experimental cost.
+
+Finally, we ask how good the completions can possibly be.
+Because the reference state is available as a matrix product state, the exact
+conditional distribution of the lost sites given the surviving ones can be
+computed shot by shot, which fixes an information-theoretic ceiling: no
+procedure, however sophisticated, can exceed it from the same data.
+Figure~\ref{fig:rydberg}c compares the model against that ceiling across the
+phase diagram. The model sits on it at every detuning tested, including three
+values beyond the range it was trained on. The margin over a site-wise guess
+--- predicting each lost site from the mean density alone --- is zero where
+the crystal is frozen and the state is effectively deterministic, and opens
+to $10$ percentage points above $\delta/\Omega \approx 4.7$, where an
+additional excitation enters the chain and delocalises. In that regime the
+identity of the occupied sublattice varies from shot to shot, so the lost
+atoms are genuinely informative about one another, and the model extracts
+$99\%$ of the available information.
+
+% ---------------- Discussion paragraph: how the model is used ----------------
+
+\subsection*{Using the model}
+
+The three settings in this work correspond to three ways of using the same
+trained network, and they carry different evidentiary weight. First, as a
+\emph{surrogate sampler} at the sizes it was trained on: the model replaces a
+measurement campaign, generating snapshots from which any observable is
+estimated afterwards, without retraining per observable. Second, as a
+\emph{cross-scale generator}: measurements are generated at system sizes
+never seen in training and, through recursive extrapolation, used to estimate
+thermodynamic-limit quantities. This is the strongest claim in the paper and
+also the most fragile one; we therefore validate every rung against a
+quasi-exact reference and state explicitly the parameter windows in which the
+extrapolation is reliable. Third, as a \emph{conditional completer} of
+incomplete records, which is the mode closest to experimental practice and
+the one demonstrated in Fig.~\ref{fig:rydberg}.
+
+Two properties of the architecture make the third mode possible. The
+denoising process conditions on an arbitrary subset of observed tokens, so
+the pattern of missing sites need not be contiguous or known in advance; and
+generation proceeds one site per denoising step, so correlations between
+sites completed within the same shot are preserved. An autoregressive model
+with a fixed site ordering can condition only on a prefix, and cannot fill an
+interleaved pattern of gaps without retraining for each pattern.
+
+The completion results are claims about the measurement distribution at a
+fixed system size, not about scaling: they show that the model has learned
+the conditional structure of the state, not that it can extrapolate it. We
+also note what Fig.~\ref{fig:rydberg}c does \emph{not} claim. The ceiling it
+is compared against is computed from the tensor-network description of the
+state, so the figure demonstrates optimality \emph{given measurement data
+alone} --- the model never sees the state or the Hamiltonian --- rather than
+an advantage over tensor-network methods. Likewise, the margin over the
+site-wise guess exists because $N=32$ cannot host a commensurate $Z_3$
+crystal; on a commensurate chain ($N=33$) the margin falls to $0.07$
+percentage points. The regime in which completion is most valuable is
+therefore the one experiments actually occupy --- finite arrays with
+imperfect filling --- but it is a property of the array, not of the phase.
+
+% ---------------- Methods ----------------
+
+\subsection{Rydberg chain and the completion protocol}
+The Rydberg Hamiltonian is
+$H = \frac{\Omega}{2}\sum_i \sigma^x_i - \delta\sum_i n_i
++ \sum_{i<j} \frac{C_6}{|i-j|^6 a^6} n_i n_j$
+on a chain of $N=32$ sites with open boundaries and blockade radius
+$R_b/a = 2.35$, truncated at fifth-neighbour range. Ground states and
+reference snapshots are obtained by DMRG; occupation measurements are
+$Z$-basis readouts, tokenized exactly as the classical-shadow records used
+elsewhere in this work, so no change to the model is required. Diffushadow is
+trained on snapshots at $N = 16, 24, 32$ and evaluated on $1000$ held-out
+shots per detuning generated with an independent seed. Atom loss is applied
+with a fixed per-(detuning, loss-rate) mask, so that the two decodings are
+scored on identical hidden sites. Completion conditions on the surviving
+sites and denoises the remainder one site per step. The exact conditional
+marginals used in Fig.~\ref{fig:rydberg}c are obtained by conditioning the
+matrix product state on the surviving atoms of each shot; with nothing
+observed they reproduce the DMRG density profile to $10^{-16}$.
