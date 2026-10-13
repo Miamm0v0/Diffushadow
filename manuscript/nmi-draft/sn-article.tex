@@ -1453,80 +1453,64 @@ This reference averages the optimal binary decision at each missing site under t
 \subsection{Attention analysis}
 \label{sec:method_attention}
 
-We analyze attention maps from a fixed trained TFI checkpoint in evaluation mode. All measurement-outcome tokens are set to \([\mathrm{MASK}]\), while the Hamiltonian parameter and measurement bases remain available. For each system size, Pauli-basis configurations are sampled independently and uniformly at each site, and the same configurations are reused across the scanned values of \(g\). The checkpoint identifier, training sizes, number of basis configurations, random seeds and evaluation grids are specified in the Supplementary Methods.
+We analyze attention maps from a fixed trained TFI checkpoint in evaluation mode. All measurement-outcome tokens are set to \([\mathrm{MASK}]\), while the Hamiltonian parameter and measurement bases remain available. For each system size, Pauli-basis configurations are sampled independently and uniformly at each site, and the same configurations are reused across the scanned values of \(g\). Panels a--e of Fig.~\ref{fig3} use \(N=14\); panel f compares \(N=6,8,10,12\) and \(14\). The checkpoint identifier, training sizes, number of basis configurations, random seeds and evaluation grids are specified in the Supplementary Methods.
 
-Let \(A_{qk}^{(\ell,h)}\) denote the attention weight from query token \(q\) to key token \(k\) in layer \(\ell\) and head \(h\). We use masked outcome tokens as queries and assign both \(P_i\) and \(b_i\) to lattice site \(i\). For the set of site-indexed keys
-\(\mathcal{S}=\{P_i,b_i\}_{i=1}^{N}\), the normalized attention-weighted site distance is
-\begin{equation}
-\label{eq:attention_site_distance}
-D^{(\ell,h)}(q)
-=
-\frac{
-\sum_{k\in\mathcal{S}}
-A_{qk}^{(\ell,h)}
-d_N\!\left(s(q),s(k)\right)
-}{
-\lfloor N/2\rfloor
-\sum_{k\in\mathcal{S}}A_{qk}^{(\ell,h)}
-},
-\end{equation}
-where
-\(d_N(i,j)=\min\{|i-j|,N-|i-j|\}\)
-is the shortest periodic lattice distance.
-The denominator renormalizes attention over the basis and outcome keys and scales distances by the maximum periodic separation. The parameter token is excluded from this spatial measure. The mean distance reported in Fig.~2e is averaged over query sites, basis configurations, heads and layers.
-
-To resolve outcome-directed attention by spatial separation, we define
+Let \(A_{qk}^{(\ell,h)}\) denote the attention weight from query token \(q\) to key token \(k\) in layer \(\ell\) and head \(h\). Using masked outcome tokens as queries, we define outcome-directed and basis-directed spatial kernels by
 \begin{equation}
 \label{eq:attention_outcome_kernel}
+\begin{aligned}
 K_{bb}^{(\ell,h)}(\delta;N,g)
-=
-\left\langle
-\sum_{j:\,\delta_N(i,j)=\delta}
-A_{b_i,b_j}^{(\ell,h)}
+&=\left\langle
+\sum_{j:\,\delta_N(i,j)=\delta} A_{b_i,b_j}^{(\ell,h)}
+\right\rangle_{i,\mathbf{P}},\\
+K_{bP}^{(\ell,h)}(\delta;N,g)
+&=\left\langle
+\sum_{j:\,\delta_N(i,j)=\delta} A_{b_i,P_j}^{(\ell,h)}
+\right\rangle_{i,\mathbf{P}},
+\end{aligned}
+\end{equation}
+where \(\delta_N(i,j)\) is the signed periodic representative of \(j-i\) in \((-N/2,N/2]\), and the average is over query sites and basis configurations. The heatmaps in Fig.~\ref{fig3}a,b additionally average these kernels over all layers and heads. They show attention mass directed to each token type without separately renormalizing the two kernels.
+
+To quantify the spatial response to \(g\) for each layer--head pair, we use the normalized attention-weighted mean site distance
+\begin{equation}
+\label{eq:attention_site_distance}
+D^{(\ell,h)}(N,g)
+=\left\langle
+\frac{\sum_{j=1}^{N}
+\bigl(A_{b_i,P_j}^{(\ell,h)}+A_{b_i,b_j}^{(\ell,h)}\bigr)d_N(i,j)}
+{\lfloor N/2\rfloor\sum_{j=1}^{N}
+\bigl(A_{b_i,P_j}^{(\ell,h)}+A_{b_i,b_j}^{(\ell,h)}\bigr)}
 \right\rangle_{i,\mathbf{P}},
 \end{equation}
-where \(\delta_N(i,j)\) is the signed periodic representative of \(j-i\) in
-\((-N/2,N/2]\).
-The average is taken over query sites and basis configurations, retaining a separate kernel for each layer--head pair. Absolute-distance kernels are obtained by combining signed displacements,
+where \(d_N(i,j)=\min\{|i-j|,N-|i-j|\}\) is the shortest periodic lattice distance. For each query, attention is renormalized over basis and outcome keys, excluding the parameter token, and distance is scaled by the maximum periodic separation. Figure~\ref{fig3}c reports
+\begin{equation}
+\label{eq:attention_distance_variation}
+\Delta D^{(\ell,h)}
+=\max_g D^{(\ell,h)}(14,g)-\min_g D^{(\ell,h)}(14,g),
+\end{equation}
+with extrema taken over the scanned parameter grid, retaining a separate value for each layer and head.
+
+For comparison with physical correlations, signed outcome-directed kernels are folded into absolute-distance kernels,
 \begin{equation}
 \label{eq:attention_absolute_kernel}
-K_{bb,\mathrm{abs}}^{(\ell,h)}(r)
-=
-\sum_{\delta:\,|\delta|=r}
-K_{bb}^{(\ell,h)}(\delta).
+K_{bb,\mathrm{abs}}^{(\ell,h)}(r;N,g)
+=\sum_{\delta:\,|\delta|=r}K_{bb}^{(\ell,h)}(\delta;N,g).
 \end{equation}
-This construction counts the self-site contribution and, for even \(N\), the antipodal site once.
-
-Each head's folded kernel is compared with the corresponding exact finite-size correlation profile
-\(C_{ZZ,N}(r,g)=|\langle Z_iZ_{i+r}\rangle|\),
-with spatial averaging understood. The comparison set \(\mathcal{R}_N\) contains the nonzero periodic distances available in both the kernel and the numerical reference. The illustrated \(N=14\) profile in Fig.~2f uses \(r=1,\ldots,5\); the complete comparison ranges and reference-grid matching settings are reported in the Supplementary Methods. Each profile is divided by its sum over \(\mathcal{R}_N\), giving
-\(\widetilde K_{bb}^{(\ell,h)}(r)\) and
-\(\widetilde C_{ZZ,N}(r)\).
-Their cosine similarity is
+This construction counts the self-site contribution and, for even \(N\), the antipodal site once. Each folded kernel is compared with the exact finite-size absolute correlation profile \(C_{ZZ,N}(r,g)=|\langle Z_iZ_{i+r}\rangle|\), with spatial averaging understood. The comparison set \(\mathcal{R}_N\) contains nonzero periodic distances available in both profiles; Fig.~\ref{fig3}d uses \(r=1,\ldots,5\). Complete comparison ranges and reference-grid matching settings are reported in the Supplementary Methods. Dividing each profile by its sum over \(\mathcal{R}_N\) gives \(\widetilde K_{bb}^{(\ell,h)}\) and \(\widetilde C_{ZZ,N}\). Their cosine similarity is
 \begin{equation}
 \label{eq:attention_correlation_cosine}
 S_{\mathrm{cos}}^{(\ell,h)}(N,g)
-=
-\frac{
-\sum_{r\in\mathcal{R}_N}
-\widetilde K_{bb}^{(\ell,h)}(r)
-\widetilde C_{ZZ,N}(r)
-}{
-\sqrt{
-\sum_{r\in\mathcal{R}_N}
-\left[\widetilde K_{bb}^{(\ell,h)}(r)\right]^2
-}
-\sqrt{
-\sum_{r\in\mathcal{R}_N}
-\left[\widetilde C_{ZZ,N}(r)\right]^2
-}
-}.
+=\frac{\sum_{r\in\mathcal{R}_N}
+\widetilde K_{bb}^{(\ell,h)}(r)\widetilde C_{ZZ,N}(r)}
+{\sqrt{\sum_{r\in\mathcal{R}_N}[\widetilde K_{bb}^{(\ell,h)}(r)]^2}
+\sqrt{\sum_{r\in\mathcal{R}_N}[\widetilde C_{ZZ,N}(r)]^2}}.
 \end{equation}
-The similarity is defined for profiles with nonzero norms.
+The similarity is defined for profiles with nonzero norms. Figure~\ref{fig3}d shows L5H4, selected for the largest similarity among all layer--head pairs at \(N=14\) and \(g=0.7\); layer and head indices are zero-based.
 
-The single-head example in Fig.~2f uses L5H4 at \(N=14\) and \(g=0.7\), selected by the largest cosine similarity at this setting. Layer and head labels follow the zero-based implementation indices. For Fig.~2g, cosine similarities are first calculated separately for every layer--head pair after averaging its kernel over queries and basis configurations. At each \(N\) and \(g\), the central curve shows the median across these pairs, and shading spans their 25th to 75th percentiles. This interquartile range describes variation among heads.
+Similarities are calculated separately for every layer--head pair after averaging its kernel over query sites and basis configurations. In Fig.~\ref{fig3}e, each point is the median over the eight heads within one layer at \(N=14\), evaluated at \(g=0.3,0.5,0.7\) and \(0.9\); shading spans the corresponding 25th to 75th percentiles. In Fig.~\ref{fig3}f, the median and interquartile range are taken over all 48 layer--head pairs at each \(N\) and \(g\). These ranges describe variation among heads within the specified groups.
 
-Basis-directed kernels, across-parameter distance variations \(\Delta D\), spatial first moments, and the fixation and KL-divergence protocols for the causal-mask control are described in the Supplementary Methods.
+The fixation and KL-divergence protocols for the causal-mask control are described in the Supplementary Methods.
+
 
 
 
