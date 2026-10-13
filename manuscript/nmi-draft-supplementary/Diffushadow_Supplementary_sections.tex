@@ -924,12 +924,14 @@ $\binom{N-\ell}{k}/\binom{N}{k}$.
 \label{supp:attention}
 
 \subhead{Analysis inputs and attention-weighted distance}
-The analysis in Fig.~2e--g uses a fixed TFI checkpoint in evaluation mode,
-with all outcome tokens set to \texttt{[MASK]}. Basis tokens are sampled
+The analysis in main-text Fig.~3 uses a fixed trained TFI checkpoint in
+evaluation mode, with all outcome tokens set to \texttt{[MASK]} and the
+Hamiltonian parameter and measurement bases available. Basis tokens are sampled
 independently and uniformly from $X,Y,Z$ at every site, and the same
 basis configurations are reused across the scanned values of $g$ at a
 given $N$. No generated outcomes are inserted during this attention
-measurement. 
+measurement. Panels a--e use $N=14$; panel f compares
+$N=6,8,10,12$ and $14$.
 % \TBD{ATTN-CKPT: checkpoint and training-size set};
 % \TBD{ATTN-INPUTS: numbers of configurations, seeds, $N$ and $g$ grids}.
 
@@ -940,18 +942,30 @@ the parameter token has no site label. For
 $\mathcal{S}=\{P_i,b_i\}_{i=1}^{N}$ and
 $d_N(i,j)=\min\{|i-j|,N-|i-j|\}$, define
 \begin{equation}
-D^{(\ell,h)}(q)=
+D^{(\ell,h)}(N,g)=\left\langle
 \frac{\sum_{k\in\mathcal{S}}A^{(\ell,h)}_{qk}
 d_N(s(q),s(k))}
-{\lfloor N/2\rfloor\sum_{k\in\mathcal{S}}A^{(\ell,h)}_{qk}}.
+{\lfloor N/2\rfloor\sum_{k\in\mathcal{S}}A^{(\ell,h)}_{qk}}
+\right\rangle_{q,\mathbf{P}}.
 \label{supp:eq:attention_distance}
 \end{equation}
 The denominator conditions the spatial measure on attention assigned to
 basis and outcome keys and normalizes the maximum periodic distance to
 one. Same-site basis and outcome keys are included with zero distance;
 the parameter key is excluded. The query-wise ratios are averaged over
-query sites and basis configurations, then over all heads and layers for
-Fig.~2e. Ratios are not formed after pooling attention rows.
+query sites and basis configurations, retaining a separate value for each
+layer--head pair. Ratios are not formed after pooling attention rows.
+Main-text Fig.~3c reports the parameter sensitivity
+\begin{equation}
+\Delta D^{(\ell,h)}
+=\max_{g\in\mathcal{G}_{\mathrm{attn}}}D^{(\ell,h)}(14,g)
+-\min_{g\in\mathcal{G}_{\mathrm{attn}}}D^{(\ell,h)}(14,g),
+\label{supp:eq:delta_distance}
+\end{equation}
+where the extrema are taken over the scanned parameter grid
+$\mathcal{G}_{\mathrm{attn}}$. Layer and head indices are zero-based;
+the six layers and eight heads are indexed by $\ell=0,\ldots,5$ and
+$h=0,\ldots,7$, respectively.
 
 \subhead{Site kernels and physical-correlation comparison}
 The signed displacement $\delta_N(i,j)$ is obtained from $(j-i)\bmod N$
@@ -969,9 +983,11 @@ A^{(\ell,h)}_{b_i,P_j}\right\rangle_{i,\mathbf{P}}.
 \label{supp:eq:attention_kernels}
 \end{equation}
 These averages retain the original attention weights; rows are not first
-renormalized within a key type. Kernels are kept separate for each layer
-and head. Head or layer averaging is used only when displaying an
-explicitly averaged kernel.
+renormalized within a key type. The heatmaps in main-text Fig.~3a,b
+additionally average the kernels over all layers and heads. They display
+the attention mass directed to each token type without separately
+renormalizing the two kernels. Kernels remain separate for each
+layer--head pair in the correlation-profile comparisons below.
 
 For the comparison with physical correlations, the outcome-directed
 kernel is folded onto absolute periodic distance by
@@ -982,55 +998,46 @@ K^{(\ell,h),\mathrm{abs}}_{bb}(r)
 \end{equation}
 Opposite displacements are summed. The self term and, for even $N$, the
 antipodal term are each counted once. The comparison uses the nonzero
-distances $\mathcal{R}_{N,g}$ available in both this kernel and the
+distances $\mathcal{R}_{N}$ available in both this kernel and the
 finite-size reference profile
 $C_{ZZ,N}^{\mathrm{abs}}(r,g)=|N^{-1}\sum_i\langle Z_iZ_{i+r}\rangle|$.
-The example in Fig.~2f uses $N=14$, $g=0.7$ and $r=1,\ldots,5$.
+The example in main-text Fig.~3d uses $N=14$, $g=0.7$ and $r=1,\ldots,5$.
 % \TBD{ATTN-REFERENCE: complete distance ranges, exact-reference files,
 % parameter-grid matching and any interpolation settings}.
 
-Each profile is normalized by its own sum over $\mathcal{R}_{N,g}$,
+Each profile is normalized by its own sum over $\mathcal{R}_{N}$,
 giving $\widetilde{K}^{(\ell,h)}_{bb}(r)$ and
 $\widetilde{C}_{ZZ,N}(r)$. The similarity is
 \begin{equation}
 S^{(\ell,h)}_{\mathrm{cos}}(N,g)=
-\frac{\sum_{r\in\mathcal{R}_{N,g}}
+\frac{\sum_{r\in\mathcal{R}_{N}}
 \widetilde{K}^{(\ell,h)}_{bb}(r)\widetilde{C}_{ZZ,N}(r)}
-{\sqrt{\sum_{r\in\mathcal{R}_{N,g}}\widetilde{K}^{(\ell,h)}_{bb}(r)^2}
-\sqrt{\sum_{r\in\mathcal{R}_{N,g}}\widetilde{C}_{ZZ,N}(r)^2}}.
+{\sqrt{\sum_{r\in\mathcal{R}_{N}}\widetilde{K}^{(\ell,h)}_{bb}(r)^2}
+\sqrt{\sum_{r\in\mathcal{R}_{N}}\widetilde{C}_{ZZ,N}(r)^2}}.
 \label{supp:eq:attention_cosine}
 \end{equation}
 Profiles with non-positive or non-finite total weight are assigned
 undefined normalized values. Cases for which the normalized profiles or cosine similarity are undefined are excluded from the summary statistics.
-For Fig.~2g, the kernel is first averaged over query sites and basis
-configurations for each layer--head pair, and the cosine is computed
-separately for each pair. The plotted centre is the median of these
-similarities and the band spans their 25th and 75th percentiles. It is
-not the similarity of a kernel averaged across heads. Fig.~2f displays
-the highest-similarity head at its illustrated point: layer 5, head 4, with similarity 0.975. Its selection is descriptive
-and is not an independently chosen test of alignment.
+The kernel is first averaged over query sites and basis configurations
+for each layer--head pair, and the cosine is computed separately for
+each pair. Main-text Fig.~3d displays L5H4, the head with the largest
+similarity among all 48 layer--head pairs at $N=14$ and $g=0.7$, with
+$S_{\mathrm{cos}}=0.975$. Its selection is descriptive and is not an
+independently chosen test of alignment.
 
-\subhead{Auxiliary spatial measures}
-For each layer--head pair, parameter sensitivity is measured by
-\begin{equation}
-\Delta D^{(\ell,h)}(N)
-=\max_{g\in\mathcal{G}_{\mathrm{attn}}}\overline{D}^{(\ell,h)}(N,g)
--\min_{g\in\mathcal{G}_{\mathrm{attn}}}\overline{D}^{(\ell,h)}(N,g),
-\label{supp:eq:delta_distance}
-\end{equation}
-where $\overline{D}$ averages Eq.~\eqref{supp:eq:attention_distance}
-over queries and configurations. The spatial first moments are
-\begin{equation}
-\ell_{\mathrm{attn}}^{(\ell,h)}
-=\sum_{r\in\mathcal{R}_{N,g}}r\widetilde{K}^{(\ell,h)}_{bb}(r),
-\qquad
-\ell_{ZZ}=\sum_{r\in\mathcal{R}_{N,g}}r\widetilde{C}_{ZZ,N}(r).
-\label{supp:eq:spatial_moments}
-\end{equation}
-They describe the spatial extent of the two profiles over the chosen
-comparison window and are not conventional correlation lengths.
-Their comparison is descriptive; attention alignment alone does not
-establish that a particular head causes accurate observable generation.
+In main-text Fig.~3e, each point is the median similarity over the eight
+heads within one layer at $N=14$, evaluated at $g=0.3,0.5,0.7$ and $0.9$.
+The shading spans the corresponding 25th and 75th percentiles. In
+main-text Fig.~3f, the median and interquartile range are taken over all
+48 layer--head pairs at each $N$ and $g$, for $N=6,8,10,12$ and $14$.
+These summaries aggregate head-resolved similarities rather than
+computing the similarity of a kernel averaged across heads. The ranges
+describe variation among heads within the specified groups, not
+confidence intervals from repeated training or independent data samples.
+Parameter sensitivity and correlation-profile similarity measure
+distinct properties. Attention alignment alone does not establish that
+a particular head causes accurate observable generation or cross-scale
+transfer.
 
 \subhead{Causal-mask fixation control}
 Extended Data Fig.~1 compares bidirectional and causal information
@@ -1060,7 +1067,11 @@ p_i(b)\log\frac{p_i(b)}{q_i(b)}.
 \label{supp:eq:fixation_kl}
 \end{equation}
 The displayed matrix uses fixed site $j$ as the row and target site
-$i$ as the column, with diagonal entries excluded.
+$i$ as the column, with diagonal entries excluded. Full attention allows
+the fixation to influence predictions at both earlier and later sequence
+positions, whereas causal attention primarily propagates the change to
+later positions. This control illustrates the directional support of
+information propagation under the two attention masks.
 % The causal token ordering and allowed attention pairs
 % are \TBD{CAUSAL-ORDER}. These details are required to interpret the
 % directional support of the control and to reproduce the heatmaps.
@@ -1210,8 +1221,8 @@ Increasing the number of denoising steps improves the agreement between generate
 \multirow{4}{*}{$g=0.1$} 
 & ShadowGPT      & $3.63{\times}10^{-4}$ & $7.56{\times}10^{-4}$ & $6.80{\times}10^{-4}$ & $2.77{\times}10^{-3}$\\
 & Diffu-rdm & $2.34{\times}10^{-3}$ & $2.90{\times}10^{-4}$ & $1.88{\times}10^{-6}$ & $3.69{\times}10^{-3}$\\
-& Diffu-s1  & $7.99{\times}10^{1}$ & $1.92{\times}10^{-4}$ & $1.16{\times}10^{-4}$ & $\underline{\mathbf{4.10{\times}10^{-4}}}$\\
-& \textbf{Diffushadow}    & $\underline{\mathbf{2.77{\times}10^{-4}}}$ & $\underline{\mathbf{2.20{\times}10^{-4}}}$ & $\underline{\mathbf{1.85{\times}10^{-7}}}$ & $1.33{\times}10^{-3}$\\
+& Diffu-s1  & $7.99{\times}10^{1}$ & $1.92{\times}10^{-4}$ & $1.16{\times}10^{-4}$ & $\underline{4.10{\times}10^{-4}}$\\
+& \textbf{Diffushadow}    & $\underline{\mathbf{2.77{\times}10^{-4}}}$ & $\underline{\mathbf{2.20{\times}10^{-4}}}$ & $\underline{\mathbf{1.85{\times}10^{-7}}}$ & $\mathbf{1.33{\times}10^{-3}}$\\
 \hline
 \multirow{4}{*}{$g=0.5$} 
 & ShadowGPT      & $1.35{\times}10^{-2}$ & $6.31{\times}10^{-5}$ & $2.15{\times}10^{-4}$ & $2.77{\times}10^{-4}$\\
@@ -1220,10 +1231,10 @@ Increasing the number of denoising steps improves the agreement between generate
 & \textbf{Diffushadow}    & $\underline{\mathbf{7.13{\times}10^{-3}}}$ & $\underline{\mathbf{4.01{\times}10^{-5}}}$ & $\underline{\mathbf{4.90{\times}10^{-5}}}$ & $\underline{\mathbf{2.29{\times}10^{-4}}}$\\
 \hline
 \multirow{4}{*}{$g=0.9$} 
-& ShadowGPT      & $6.79{\times}10^{-4}$ & $9.88{\times}10^{-6}$ & $4.76{\times}10^{-5}$ & $\underline{\mathbf{7.57{\times}10^{-5}}}$\\
-& Diffu-rdm & $5.05{\times}10^{-4}$ & $6.57{\times}10^{-8}$ & $6.20{\times}10^{-4}$ & $4.28{\times}10^{-3}$\\
+& ShadowGPT      & $6.79{\times}10^{-4}$ & $9.88{\times}10^{-6}$ & $4.76{\times}10^{-5}$ & $\underline{7.57{\times}10^{-5}}$\\
+& Diffu-rdm & $5.05{\times}10^{-4}$ & $\underline{6.57{\times}10^{-8}}$ & $6.20{\times}10^{-4}$ & $4.28{\times}10^{-3}$\\
 & Diffu-s1  & $1.47{\times}10^{-3}$ & $4.44{\times}10^{-6}$ & $4.33{\times}10^{-4}$ & $1.21{\times}10^{-3}$\\
-& \textbf{Diffushadow}    & $\underline{\mathbf{4.98{\times}10^{-4}}}$ & $\underline{\mathbf{3.32{\times}10^{-6}}}$ & $\underline{\mathbf{2.22{\times}10^{-8}}}$ & $3.88{\times}10^{-4}$\\
+& \textbf{Diffushadow}    & $\underline{\mathbf{4.98{\times}10^{-4}}}$ & $\underline{\mathbf{3.32{\times}10^{-6}}}$ & $\underline{\mathbf{2.22{\times}10^{-8}}}$ & $\mathbf{3.88{\times}10^{-4}}$\\
 \hline
 \end{tabular}
 \end{table}
@@ -1331,7 +1342,7 @@ As the number of generated snapshots increases, the estimated observables remain
 \label{supp:rydberg_results}
 
 These diagnostics supplement the occupation structure factor and
-missing-site accuracy in Fig.~4. They use $N=32$, $R_b/a=2.35$,
+missing-site accuracy in Fig.~5. They use $N=32$, $R_b/a=2.35$,
 $f=0.3$ and $k=10$ uniformly chosen missing sites per record.
 The intact, conditional-sampling and unconditioned-fill ensembles
 share the same $M_d=1000$ records and masks at each of the four original
