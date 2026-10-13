@@ -1,0 +1,21 @@
+# Local upload checkout
+.github-upload/
+
+# Include manuscript figures even if the parent repository ignores figures/
+!figures/
+!figures/**
+
+# LaTeX build files (keep the compiled PDF)
+build/
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv
