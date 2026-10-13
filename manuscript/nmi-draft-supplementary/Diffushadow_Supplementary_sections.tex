@@ -924,16 +924,17 @@ $\binom{N-\ell}{k}/\binom{N}{k}$.
 \label{supp:attention}
 
 \subhead{Analysis inputs and attention-weighted distance}
-The analysis in main-text Fig.~3 uses a fixed trained TFI checkpoint in
-evaluation mode, with all outcome tokens set to \texttt{[MASK]} and the
-Hamiltonian parameter and measurement bases available. Basis tokens are sampled
-independently and uniformly from $X,Y,Z$ at every site, and the same
-basis configurations are reused across the scanned values of $g$ at a
-given $N$. No generated outcomes are inserted during this attention
-measurement. Panels a--e use $N=14$; panel f compares
-$N=6,8,10,12$ and $14$.
-% \TBD{ATTN-CKPT: checkpoint and training-size set};
-% \TBD{ATTN-INPUTS: numbers of configurations, seeds, $N$ and $g$ grids}.
+The analysis in main-text Fig.~3 uses the round-1 TFI model, trained at
+$N=8,10,12,14$, with six layers, eight heads, hidden dimension 256 and
+dynamic RoPE with scaling factor 4.0. The checkpoint is evaluated with
+all outcome tokens set to \texttt{[MASK]}, while the Hamiltonian
+parameter and measurement bases remain available.
+
+For each $N$, we sample 512 basis configurations with random seed 1234,
+choosing each $P_i$ independently and uniformly from $\{X,Y,Z\}$.
+The same configurations are reused across the parameter grid
+$\mathcal{G}_{\mathrm{attn}}=\{0,0.1,0.3,0.5,0.7,0.9,1.0\}$.
+Panels a--e use $N=14$; panel f compares $N=6,8,10,12$ and $14$.
 
 Let $A^{(\ell,h)}_{qk}$ be the post-softmax attention weight from query
 token $q$ to key token $k$ in layer $\ell$ and head $h$. Masked outcome
@@ -1002,8 +1003,13 @@ distances $\mathcal{R}_{N}$ available in both this kernel and the
 finite-size reference profile
 $C_{ZZ,N}^{\mathrm{abs}}(r,g)=|N^{-1}\sum_i\langle Z_iZ_{i+r}\rangle|$.
 The example in main-text Fig.~3d uses $N=14$, $g=0.7$ and $r=1,\ldots,5$.
-% \TBD{ATTN-REFERENCE: complete distance ranges, exact-reference files,
-% parameter-grid matching and any interpolation settings}.
+The comparison ranges are $\mathcal{R}_6=\{1,2,3\}$,
+$\mathcal{R}_8=\{1,2,3,4\}$ and
+$\mathcal{R}_{10}=\mathcal{R}_{12}=\mathcal{R}_{14}=\{1,2,3,4,5\}$.
+Each size uses its corresponding finite-size exact $ZZ$ correlation
+profile, matched to $\mathcal{G}_{\mathrm{attn}}$ by one-dimensional
+linear interpolation on the dense exact-reference $g$ grid. Only points
+within the exact-grid range are accepted, with endpoint tolerance $10^{-6}$.
 
 Each profile is normalized by its own sum over $\mathcal{R}_{N}$,
 giving $\widetilde{K}^{(\ell,h)}_{bb}(r)$ and
@@ -1221,8 +1227,8 @@ Increasing the number of denoising steps improves the agreement between generate
 \multirow{4}{*}{$g=0.1$} 
 & ShadowGPT      & $3.63{\times}10^{-4}$ & $7.56{\times}10^{-4}$ & $6.80{\times}10^{-4}$ & $2.77{\times}10^{-3}$\\
 & Diffu-rdm & $2.34{\times}10^{-3}$ & $2.90{\times}10^{-4}$ & $1.88{\times}10^{-6}$ & $3.69{\times}10^{-3}$\\
-& Diffu-s1  & $7.99{\times}10^{1}$ & $1.92{\times}10^{-4}$ & $1.16{\times}10^{-4}$ & $\underline{4.10{\times}10^{-4}}$\\
-& \textbf{Diffushadow}    & $\underline{\mathbf{2.77{\times}10^{-4}}}$ & $\underline{\mathbf{2.20{\times}10^{-4}}}$ & $\underline{\mathbf{1.85{\times}10^{-7}}}$ & $\mathbf{1.33{\times}10^{-3}}$\\
+& Diffu-s1  & $7.99{\times}10^{1}$ & $\underline{1.92{\times}10^{-4}}$ & $1.16{\times}10^{-4}$ & $\underline{4.10{\times}10^{-4}}$\\
+& \textbf{Diffushadow}    & $\underline{\mathbf{2.77{\times}10^{-4}}}$ & $\mathbf{2.20{\times}10^{-4}}$ & $\underline{\mathbf{1.85{\times}10^{-7}}}$ & $\mathbf{1.33{\times}10^{-3}}$\\
 \hline
 \multirow{4}{*}{$g=0.5$} 
 & ShadowGPT      & $1.35{\times}10^{-2}$ & $6.31{\times}10^{-5}$ & $2.15{\times}10^{-4}$ & $2.77{\times}10^{-4}$\\
