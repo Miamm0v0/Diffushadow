@@ -109,7 +109,7 @@
 \author[2]{\fnm{Mingjun} \sur{Han}}\email{mingjun.han@universite-paris-saclay.fr}
 % \equalcont{These authors contributed equally to this work.}
 
-\author*[3]{\fnm{HoHo-Kin} \sur{Tang}}\email{denghaojian@hit.edu.cn}
+\author*[3]{\fnm{Ho-Kin} \sur{Tang}}\email{denghaojian@hit.edu.cn}
 
 
 \affil[1]{\orgdiv{School of Intelligence Science and Engineering}, \orgname{Harbin Institute of Technology}, 
@@ -940,7 +940,7 @@ Unless otherwise specified, Diffushadow consists of \(L=6\) Transformer blocks w
 
 Each Transformer block consists of multi-head full self-attention followed by a feed-forward network, with residual connections and layer normalization. Unlike causal autoregressive models, Diffushadow applies full attention over the entire sequence, allowing each measurement-outcome token to attend to the control parameter, all measurement bases, and all other available outcomes. 
 % This design avoids imposing a predefined left-to-right generation order and provides a flexible architecture for modeling globally correlated measurement configurations.
-To encode positional information across variable system sizes, Diffushadow applies rotary positional embeddings (RoPE) to the query and key representations in each attention layer \cite{su2024roformer}. RoPE injects site-order information by applying position-dependent rotations to the query and key vectors, so that attention weights depend not only on token content but also on relative token positions. For two-dimensional lattices, the positional representation is extended to encode the two lattice coordinates; implementation details are provided in the Supplementary Methods.
+To encode positional information across variable system sizes, Diffushadow applies rotary positional embeddings (RoPE) to the query and key representations in each attention layer \cite{su2024roformer}. RoPE injects site-order information by applying position-dependent rotations to the query and key vectors, so that attention weights depend not only on token content but also on relative token positions. For two-dimensional lattices, the positional representation is extended to encode the two lattice coordinates; implementation details are provided in the Supplementary Methods. The two-dimensional implementation uses additive parameter conditioning, whose precise definition is given in Supplementary Section S2.
 % This provides a length-flexible positional encoding for classical-shadow sequences of different system sizes. 
 The attention output is then projected back to the hidden dimension and passed through a feed-forward network with GELU activation.
 
